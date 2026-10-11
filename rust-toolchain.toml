@@ -1,0 +1,6 @@
+# Same compiler (and lints) locally and in CI as `nest-app/rust-toolchain.toml`;
+# the musl target is what an app package is built for.
+[toolchain]
+channel = "1.91.0"
+components = ["clippy", "rustfmt"]
+targets = ["armv7-unknown-linux-musleabihf"]

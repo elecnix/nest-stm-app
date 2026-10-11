@@ -1,0 +1,5 @@
+/target
+/dist
+
+# What an app writes if it is run by hand from this directory: its own data/.
+/data

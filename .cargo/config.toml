@@ -1,0 +1,5 @@
+# Nest Gen 2: ARMv7 Cortex-A8, Linux 2.6.37 — link statically against musl
+# with the bundled rust-lld, exactly as `nest-app/.cargo/config.toml` does.
+[target.armv7-unknown-linux-musleabihf]
+linker = "rust-lld"
+rustflags = ["-C", "target-cpu=cortex-a8"]

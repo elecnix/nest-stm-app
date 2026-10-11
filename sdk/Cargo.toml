@@ -1,0 +1,12 @@
+[package]
+name = "nest-app-sdk"
+description = "The SDK a Nest app builds on: the fd 3 JSON protocol, scene items and data/ storage"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+# The whole dependency list, deliberately: no async runtime, no TLS, no libc, and
+# no serde derive — nothing here ever deserialises into a struct, and an app is one
+# small static binary in a chroot with 8 MB of address space.
+serde_json = { workspace = true }

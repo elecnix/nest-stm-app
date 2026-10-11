@@ -1,0 +1,7 @@
+{
+  "id": "stm",
+  "name": "STM Bus",
+  "version": "0.1.0",
+  "icon": "mdi-bus",
+  "memory_mb": 8
+}
