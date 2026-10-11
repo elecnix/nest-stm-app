@@ -4,8 +4,8 @@
 #
 #   apps/build.sh [--host | --target TRIPLE] [APP ...]
 #
-# With no APP, every app in this workspace is packaged (any directory here with a
-# manifest.json). The app's cargo package is `nest-app-<id>` and so is its binary,
+# With no APP, every app in this workspace is packaged (any directory here with an
+# app-manifest.json). The app's cargo package is `nest-app-<id>` and so is its binary,
 # which is copied into the package as `app`.
 #
 # --host (or BUILD_HOST=1) builds for this machine instead of the Nest, for
@@ -91,9 +91,9 @@ fi
 
 # No app named: package every one in this workspace that has a manifest.
 if [ -z "$APPS" ]; then
-    for manifest in */manifest.json; do
+    for manifest in */app-manifest.json; do
         [ -f "$manifest" ] || continue
-        APPS="$APPS ${manifest%/manifest.json}"
+        APPS="$APPS ${manifest%/app-manifest.json}"
     done
 fi
 
@@ -110,8 +110,8 @@ for id in $APPS; do
             ;;
     esac
     package="nest-app-$id"
-    if [ ! -f "$id/Cargo.toml" ] || [ ! -f "$id/manifest.json" ]; then
-        echo "build.sh: no $id/Cargo.toml and $id/manifest.json: is $id an app?" >&2
+    if [ ! -f "$id/Cargo.toml" ] || [ ! -f "$id/app-manifest.json" ]; then
+        echo "build.sh: no $id/Cargo.toml and $id/app-manifest.json: is $id an app?" >&2
         exit 2
     fi
 
@@ -126,7 +126,7 @@ for id in $APPS; do
     stage=$(mktemp -d)
     trap 'rm -rf "$stage"' EXIT
     cp "$binary" "$stage/app"
-    cp "$id/manifest.json" "$stage/manifest.json"
+    cp "$id/app-manifest.json" "$stage/manifest.json"
     # The package's `app` is a program: the Nest unpacks it and runs it.
     chmod 755 "$stage/app"
 
