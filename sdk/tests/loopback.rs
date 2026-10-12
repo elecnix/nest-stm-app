@@ -128,6 +128,8 @@ fn every_message_is_dispatched_and_answered_in_order() {
         "{\"type\":\"wheel\",\"steps\":2}\n",
         "{\"type\":\"wheel\",\"steps\":-1}\n",
         "{\"type\":\"wheel\",\"steps\":2.0}\n",
+        "{\"type\":\"wheel\",\"steps\":2.9}\n",
+        "{\"type\":\"wheel\",\"steps\":-2.9}\n",
         "{\"type\":\"data\",\"data\":{\"stop\":\"Gare Centrale\"}}\n",
         "{\"type\":\"stop\"}\n",
     );
@@ -135,7 +137,16 @@ fn every_message_is_dispatched_and_answered_in_order() {
 
     assert_eq!(
         ran.calls,
-        ["open", "wheel 2", "wheel -1", "wheel 2", "data Gare Centrale", "stop"]
+        [
+            "open",
+            "wheel 2",
+            "wheel -1",
+            "wheel 2",
+            "wheel 3",
+            "wheel -3",
+            "data Gare Centrale",
+            "stop"
+        ]
     );
     assert_eq!(
         ran.sent,
@@ -150,11 +161,17 @@ fn every_message_is_dispatched_and_answered_in_order() {
             json!({"type": "tick"}),
             json!({"type": "event", "data": {"wheel": 2}}),
             json!({"type": "scene", "items": [{"k": "text", "c": "#ffffff", "s": "wheel2"}]}),
+            json!({"type": "tick"}),
+            json!({"type": "event", "data": {"wheel": 3}}),
+            json!({"type": "scene", "items": [{"k": "text", "c": "#ffffff", "s": "wheel3"}]}),
+            json!({"type": "tick"}),
+            json!({"type": "event", "data": {"wheel": -3}}),
+            json!({"type": "scene", "items": [{"k": "text", "c": "#ffffff", "s": "wheel-3"}]}),
             json!({"type": "scene", "items": [{"k": "text", "c": "#ffffff", "s": "data"}]}),
         ]
     );
     // One message per line, one newline each, and nothing after `stop`.
-    assert_eq!(ran.raw.len(), 11);
+    assert_eq!(ran.raw.len(), 17);
     // serde_json writes an object's keys in sorted order (the SDK adds no `preserve_order`
     // dependency); the Nest parses JSON and does not care.
     assert_eq!(

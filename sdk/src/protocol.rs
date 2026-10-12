@@ -263,10 +263,12 @@ impl App {
 }
 
 /// The `steps` of a `wheel` message: an integer, and a float too, so that a Nest that sends
-/// `2.0` is understood rather than ignored.
+/// `2.0` is understood rather than ignored. A float is rounded to the nearest step
+/// (2.9 is 3 and -2.9 is -3), not truncated toward zero — the ring's steps are whole
+/// detents, so half a detent goes to whichever side it leaned to.
 fn steps_of(msg: &Value) -> Option<i32> {
     let steps = match msg.get("steps")? {
-        Value::Number(n) => n.as_i64().or_else(|| n.as_f64().map(|f| f as i64))?,
+        Value::Number(n) => n.as_i64().or_else(|| n.as_f64().map(|f| f.round() as i64))?,
         _ => return None,
     };
     Some(steps.clamp(i64::from(i32::MIN), i64::from(i32::MAX)) as i32)
