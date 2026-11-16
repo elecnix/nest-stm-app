@@ -152,7 +152,7 @@ mod tests {
             route: route.to_string(),
             headsign: format!("{route} somewhere"),
             minutes,
-            time: None,
+            ..Departure::default()
         }
     }
 
@@ -315,6 +315,7 @@ mod tests {
                     headsign: "A headsign far longer than the row it has to fit in".to_string(),
                     minutes: None,
                     time: Some("14:32".to_string()),
+                    ..Departure::default()
                 },
                 Departure::default(),
             ],

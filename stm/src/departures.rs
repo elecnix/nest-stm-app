@@ -2,7 +2,7 @@
 //!
 //! ```json
 //! {"stop": "Gare Centrale", "departures": [{"route": "55", "headsign": "Saint-Laurent",
-//! "minutes": 3, "time": "14:32"}]}
+//! "minutes": 3, "time": "14:32", "label": "demain"}]}
 //! ```
 //!
 //! Nothing here trusts the payload. Home Assistant is the one talking to the transit API, and this
@@ -32,11 +32,24 @@ pub struct Departure {
     pub minutes: Option<f64>,
     /// The clock time it leaves, when the payload has that instead.
     pub time: Option<String>,
+    /// The day it leaves, when that is not today: `demain`, `vendredi`, the
+    /// French name the board prefixes the clock time with — the timetable
+    /// fills a departure the realtime feed has not reached, and the day is
+    /// what keeps 06:30 tonight and 06:30 tomorrow apart.
+    pub label: Option<String>,
 }
 
 impl Departure {
-    /// What the right-hand column says: how long, or when.
+    /// What the right-hand column says: which day and when, how long, or when.
     pub fn when(&self) -> String {
+        // A day label carries its own clock time with it: `demain 06:30` is
+        // the whole answer, so the minutes that also arrive are not drawn.
+        if let (Some(label), Some(clock)) = (
+            self.label.as_deref().filter(|l| !l.is_empty()),
+            self.time.as_deref().filter(|t| !t.is_empty()),
+        ) {
+            return format!("{label} {clock}");
+        }
         match self.minutes {
             // Due, or overdue: the board the transit agency has says the same.
             Some(m) if m <= 0.0 => "now".to_string(),
@@ -88,6 +101,7 @@ impl Departure {
             headsign: value.get("headsign").and_then(text).unwrap_or_default(),
             minutes: value.get("minutes").and_then(number),
             time: value.get("time").and_then(text),
+            label: value.get("label").and_then(text),
         })
     }
 }
@@ -131,7 +145,7 @@ mod tests {
             route: route.to_string(),
             headsign: format!("{route} somewhere"),
             minutes,
-            time: None,
+            ..Departure::default()
         }
     }
 
@@ -164,6 +178,7 @@ mod tests {
                 headsign: "Saint-Laurent".to_string(),
                 minutes: Some(3.0),
                 time: Some("14:32".to_string()),
+                ..Departure::default()
             }
         );
         // An extra field is not an error.
@@ -239,6 +254,53 @@ mod tests {
             };
             assert_eq!(d.when(), expected, "{minutes:?}");
         }
+    }
+
+    #[test]
+    fn a_day_label_names_the_day_and_takes_its_time_with_it() {
+        // The timetable fills a departure the realtime feed has not reached:
+        // the day label and the clock time are the answer together, whatever
+        // the minutes also say.
+        let d = Departure {
+            minutes: Some(570.0),
+            time: Some("06:30".to_string()),
+            label: Some("demain".to_string()),
+            ..Departure::default()
+        };
+        assert_eq!(d.when(), "demain 06:30");
+
+        // A later day carries the weekday's name, still French.
+        let d = Departure {
+            time: Some("06:48".to_string()),
+            label: Some("vendredi".to_string()),
+            ..Departure::default()
+        };
+        assert_eq!(d.when(), "vendredi 06:48");
+
+        // An empty label is no label at all: the countdown stands.
+        let d = Departure {
+            minutes: Some(3.0),
+            time: Some("14:32".to_string()),
+            label: Some("".to_string()),
+            ..Departure::default()
+        };
+        assert_eq!(d.when(), "3 min");
+
+        // A label without a clock time falls back to the minutes.
+        let d = Departure {
+            minutes: Some(600.0),
+            label: Some("demain".to_string()),
+            ..Departure::default()
+        };
+        assert_eq!(d.when(), "600 min");
+
+        // An old payload with no label reads exactly as before.
+        let d = Departure {
+            minutes: Some(3.0),
+            time: Some("14:32".to_string()),
+            ..Departure::default()
+        };
+        assert_eq!(d.when(), "3 min");
     }
 
     #[test]
