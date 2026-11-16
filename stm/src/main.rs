@@ -18,7 +18,6 @@
 //! Nest draws the same scene all afternoon for free. The loop blocks on the socket and ends on
 //! `stop`, or on the end of the connection.
 
-use nest_app_stm::departures;
 use nest_app_stm::screen;
 
 use nest_app_sdk::{App, Handler};
